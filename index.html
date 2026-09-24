@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tonie Audio Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF7EF;--card:#fff;--ink:#2B1D1A;--mute:#7A6560;--red:#E4002B;--line:#F0DCCF;--chip:#FDE8DA;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root{--bg:#1C1413;--card:#2A1F1D;--ink:#F7ECE6;--mute:#B9A49D;--line:#3E2E2B;--chip:#3A2825}}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif}
+header{background:linear-gradient(135deg,#E4002B 0%,#B71C1C 100%);color:#fff;padding:24px 20px 20px;text-align:center}
+header h1{font-family:Fredoka,sans-serif;font-size:clamp(26px,6vw,38px);margin:0;font-weight:700}
+header p{margin:6px 0 0;opacity:.9;font-size:14px}
+.bar{max-width:520px;margin:0 auto;padding:14px 20px 6px}
+.bar input{width:100%;padding:11px 16px;border-radius:999px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:600 14px Nunito,sans-serif}
+.tags{display:flex;gap:6px;flex-wrap:wrap;max-width:520px;margin:0 auto;padding:0 20px 12px}
+.tag{border:0;padding:7px 14px;border-radius:999px;font:700 12px Nunito,sans-serif;cursor:pointer;background:var(--chip);color:var(--ink)}
+.tag.on{background:#E4002B;color:#fff}
+main{max-width:520px;margin:0 auto;padding:4px 20px 120px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:18px;overflow:hidden;display:flex;transition:box-shadow .15s}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08)}
+.thumb{width:88px;min-height:88px;background:linear-gradient(135deg,#E4002B,#FF6B6B);display:flex;align-items:center;justify-content:center;font-size:34px;flex:none}
+.body{padding:12px 14px;flex:1;min-width:0}
+.title{font:700 15px/1.3 Fredoka,sans-serif;margin:0 0 3px}
+.desc{font-size:12px;color:var(--mute);margin:0 0 8px;line-height:1.4}
+.meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.pill{border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;background:var(--chip)}
+.pill.lang{background:#E3F5EA;color:#1B5E20}
+.pill.age{background:#E3F0FF;color:#0D47A1}
+.pill.dur{background:#FFF8E1;color:#E65100}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:0;padding:8px 14px;border-radius:999px;font:700 12px Nunito,sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;text-decoration:none}
+.btn-prev{background:var(--chip);color:var(--ink)}
+.btn-dl{background:#E4002B;color:#fff}
+.btn:hover{opacity:.85}
+.coming{background:var(--chip);border-radius:12px;padding:10px 14px;font-size:12px;color:var(--mute);text-align:center;width:100%}
+.player{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid var(--line);padding:10px 16px 14px;z-index:100;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.player-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.player-title{font:700 13px Nunito,sans-serif}
+.player-close{border:0;background:none;font-size:20px;cursor:pointer;color:var(--mute);line-height:1}
+.player iframe{display:block;width:100%;height:60px;border:none}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧸 Tonie Audio Library</h1>
+  <p>Free bilingual audio — preview, download & upload to your Creative Tonie</p>
+</header>
+<div class="bar"><input type="search" id="q" placeholder="Search songs…"></div>
+<div class="tags" id="tags"></div>
+<main id="list"></main>
+
+<div class="player hidden" id="player">
+  <div class="player-top">
+    <span class="player-title" id="player-title"></span>
+    <button class="player-close" onclick="closePlayer()">✕</button>
+  </div>
+  <iframe id="player-frame" scrolling="no" allow="autoplay"></iframe>
+</div>
+
+<script>
+const TRACKS=[
+  {
+    id:1,
+    title:"ABC Song y Baile",
+    desc:"Learn the alphabet in Spanish first, then English, over a catchy dembow beat your little one will want to dance to all day.",
+    emoji:"🎵",
+    tags:["Music","Bilingual","ABCs"],
+    lang:"ES/EN",age:"1-4",dur:"3 min",
+    status:"ready",
+    file:"https://raw.githubusercontent.com/CamTheToniesMom/Tonie-audio-library/main/El%20ABC%20en%20Espan%CC%83ol%20e%20Ingle%CC%81s.mp3",
+    preview:"https://soundcloud.com/cam-tonies-mom/el-abc-en-espan-ol-e-ingle-s"
+  },
+  {
+    id:2,
+    title:"Animal Groove",
+    desc:"Animals and their sounds in both languages — farm, jungle and ocean — set to an irresistible cumbia beat.",
+    emoji:"🐾",
+    tags:["Music","Bilingual","Animals"],
+    lang:"ES/EN",age:"1-4",dur:"3 min",
+    status:"ready",
+    file:"https://raw.githubusercontent.com/CamTheToniesMom/Tonie-audio-library/main/Animal%20Groove.mp3",
+    preview:"https://soundcloud.com/cam-tonies-mom/animal-groove"
+  },
+  {
+    id:3,
+    title:"Los Colores / The Colors",
+    desc:"Colors in Spanish and English with a fun cumbia rhythm. Rojo, azul, verde — red, blue, green!",
+    emoji:"🎨",
+    tags:["Music","Bilingual","Colors"],
+    lang:"ES/EN",age:"1-4",dur:"2.5 min",
+    status:"coming",file:null,preview:null
+  },
+  {
+    id:4,
+    title:"Counting Reggaeton (1-10)",
+    desc:"Uno, dos, tres — one, two, three! Count to ten in Spanish and English over a reggaeton beat.",
+    emoji:"🔢",
+    tags:["Music","Bilingual","Numbers"],
+    lang:"ES/EN",age:"1-4",dur:"2.5 min",
+    status:"coming",file:null,preview:null
+  },
+  {
+    id:5,
+    title:"Buenos Días / Good Morning",
+    desc:"A warm bilingual morning routine song. Perfect to start the day with stretches, greetings and good vibes.",
+    emoji:"☀️",
+    tags:["Music","Bilingual","Routines"],
+    lang:"ES/EN",age:"1-5",dur:"2 min",
+    status:"coming",file:null,preview:null
+  },
+  {
+    id:6,
+    title:"Buenas Noches / Goodnight",
+    desc:"A gentle bilingual lullaby for bedtime. Soft, calm and soothing in both Spanish and English.",
+    emoji:"🌙",
+    tags:["Lullaby","Bilingual","Bedtime"],
+    lang:"ES/EN",age:"0-4",dur:"4 min",
+    status:"coming",file:null,preview:null
+  },
+];
+
+const allTags=[...new Set(TRACKS.flatMap(t=>t.tags))];
+let active="All";
+
+const tagsEl=document.getElementById("tags");
+["All",...allTags].forEach(t=>{
+  const b=document.createElement("button");
+  b.className="tag"+(t==="All"?" on":"");
+  b.textContent=t;
+  b.onclick=()=>{active=t;document.querySelectorAll(".tag").forEach(x=>x.classList.toggle("on",x===b));render()};
+  tagsEl.appendChild(b);
+});
+
+function render(){
+  const q=document.getElementById("q").value.toLowerCase();
+  const items=TRACKS.filter(t=>(active==="All"||t.tags.includes(active))&&(t.title+t.desc).toLowerCase().includes(q));
+  document.getElementById("list").innerHTML=items.map(t=>`
+    <div class="card">
+      <div class="thumb">${t.emoji}</div>
+      <div class="body">
+        <div class="title">${t.title}</div>
+        <div class="desc">${t.desc}</div>
+        <div class="meta">
+          <span class="pill lang">🌎 ${t.lang}</span>
+          <span class="pill age">👶 ${t.age}</span>
+          <span class="pill dur">⏱ ${t.dur}</span>
+          ${t.tags.map(tg=>`<span class="pill">${tg}</span>`).join("")}
+        </div>
+        <div class="actions">
+          ${t.status==="coming"
+            ?`<div class="coming">🎵 Coming soon — audio in production</div>`
+            :`${t.preview?`<button class="btn btn-prev" onclick="openPlayer(${t.id})">▶ Preview</button>`:""}
+              <a class="btn btn-dl" href="${t.file}" download>⬇ Download MP3</a>
+              <small style="color:var(--mute);font-size:11px">Upload to your Creative Tonie</small>`
+          }
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function openPlayer(id){
+  const t=TRACKS.find(x=>x.id===id);
+  if(!t||!t.preview) return;
+  document.getElementById("player-title").textContent=t.title;
+  document.getElementById("player-frame").src=
+    `https://w.soundcloud.com/player/?url=${encodeURIComponent(t.preview)}&color=%23E4002B&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false`;
+  document.getElementById("player").classList.remove("hidden");
+}
+
+function closePlayer(){
+  document.getElementById("player").classList.add("hidden");
+  document.getElementById("player-frame").src="";
+}
+
+document.getElementById("q").oninput=render;
+render();
+</script>
+</body>
+</html>
